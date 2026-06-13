@@ -54,7 +54,8 @@ fun AppNavigation() {
             LobbyScreen(
                 roomId = lobbyState.roomId,
                 isWaiting = lobbyState.isWaiting,
-                errorMessage = lobbyState.errorMessage
+                errorMessage = lobbyState.errorMessage,
+                gameStarted = lobbyState.gameStarted
             )
         }
 

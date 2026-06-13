@@ -1,8 +1,10 @@
 package com.example.mypractico4.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.example.mypractico4.presentation.components.BoardCanvas
 import com.example.mypractico4.presentation.components.NextPieceView
 import com.example.mypractico4.presentation.viewmodel.GameViewModel
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun GameScreen(
@@ -30,23 +35,46 @@ fun GameScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(
+                Color(0xFFF5F5F5)
+            )
+            .padding(16.dp)
+
     ) {
-        Text("Tetris Duel Online")
+        Text(
+            text = "TETRIS DUEL",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
         Text("Sala: $roomId")
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(8.dp)
         ) {
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(16.dp)
             ) {
-                Text("Conexión: ${if (lobbyState.isConnected) "Conectado" else "Desconectado"}")
-                Text("Oponente: ${lobbyState.opponentStatus}")
-                Text("Referencia 37: Modo 37 activo")
+
+                Text(
+                    text = "Sala: $roomId",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = if (lobbyState.isConnected)
+                        "🟢 Conectado"
+                    else
+                        "🔴 Desconectado"
+                )
+
+                Text(
+                    text = "👤 ${lobbyState.opponentStatus}"
+                )
             }
         }
 
@@ -65,8 +93,28 @@ fun GameScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("Puntaje: ${gameState.score}")
-                Text("Líneas: ${gameState.lines}")
+                Card(
+                    elevation = CardDefaults.cardElevation(6.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+
+                        Text(
+                            text = "🏆 Puntaje",
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "${gameState.score}",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("📏 Líneas: ${gameState.lines}")
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
