@@ -74,6 +74,8 @@ fun AppNavigation() {
                 lines = gameState.lines,
                 durationSeconds = gameViewModel.getDurationSeconds(),
                 onBackHome = {
+                    gameViewModel.resetMatch()
+
                     navController.navigate(Routes.HOME) {
                         popUpTo(0)
                     }

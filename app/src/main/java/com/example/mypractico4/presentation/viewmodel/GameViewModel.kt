@@ -103,12 +103,24 @@ class GameViewModel : ViewModel() {
             }
         }
     }
+    fun resetMatch() {
+        gameLoopJob?.cancel()
+        gameLoopJob = null
+
+        _lobbyState.value = LobbyState()
+        _gameState.value = GameState()
+
+        repository.connect()
+    }
 
     fun createRoom() {
+        resetMatch()
         repository.createRoom()
     }
 
     fun joinRoom(roomId: String) {
+        resetMatch()
+
         _lobbyState.value = _lobbyState.value.copy(
             roomId = roomId,
             isConnected = true,
