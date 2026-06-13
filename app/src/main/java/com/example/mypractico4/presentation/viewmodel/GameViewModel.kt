@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.mypractico4.di.AppModule
 import com.example.mypractico4.domain.model.Cell
 import com.example.mypractico4.domain.model.GameState
-import com.example.mypractico4.domain.model.Tetromino
 import com.example.mypractico4.domain.model.TetrominoType
 import com.example.mypractico4.domain.model.randomPiece
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +12,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-
+import com.example.mypractico4.domain.logic.AttackLogic
+import com.example.mypractico4.domain.logic.BoardLogic
+import com.example.mypractico4.domain.logic.ScoreLogic
 
 data class LobbyState(
     val roomId: String = "",
@@ -24,11 +25,6 @@ data class LobbyState(
     val victory: Boolean = false,
     val matchFinished: Boolean = false,
     val opponentStatus: String = "Esperando oponente..."
-)
-
-data class ClearResult(
-    val board: List<List<TetrominoType?>>,
-    val linesCleared: Int
 )
 
 class GameViewModel : ViewModel() {
@@ -132,184 +128,121 @@ class GameViewModel : ViewModel() {
     }
 
     fun moveLeft() {
-        if (!_gameState.value.isGameOver) {
-            movePiece(dx = -1, dy = 0)
+        if (_gameState.value.isGameOver) return
+
+        val state = _gameState.value
+        val moved = BoardLogic.movePiece(state.currentPiece, dx = -1, dy = 0)
+
+        if (BoardLogic.isValid(moved, state.board)) {
+            _gameState.value = state.copy(currentPiece = moved)
         }
     }
 
     fun moveRight() {
-        if (!_gameState.value.isGameOver) {
-            movePiece(dx = 1, dy = 0)
+        if (_gameState.value.isGameOver) return
+
+        val state = _gameState.value
+        val moved = BoardLogic.movePiece(state.currentPiece, dx = 1, dy = 0)
+
+        if (BoardLogic.isValid(moved, state.board)) {
+            _gameState.value = state.copy(currentPiece = moved)
         }
     }
 
     fun moveDown() {
-        if (_gameState.value.isGameOver) return
+    if (_gameState.value.isGameOver) return
 
-        if (!movePiece(dx = 0, dy = 1)) {
-            lockPiece()
-        }
-    }
+    val state = _gameState.value
+    val moved = BoardLogic.movePiece(state.currentPiece, dx = 0, dy = 1)
 
-    fun rotatePiece() {
-        if (_gameState.value.isGameOver) return
-
-        val state = _gameState.value
-
-        val rotated = state.currentPiece.copy(
-            rotation = state.currentPiece.rotation + 1
-        )
-
-        if (isValid(rotated, state.board)) {
-            _gameState.value = state.copy(currentPiece = rotated)
-        }
-    }
-
-    fun hardDrop() {
-        if (_gameState.value.isGameOver) return
-
-        while (movePiece(dx = 0, dy = 1)) {
-        }
-
+    if (BoardLogic.isValid(moved, state.board)) {
+        _gameState.value = state.copy(currentPiece = moved)
+    } else {
         lockPiece()
     }
+    }
+    fun rotatePiece() {
+    if (_gameState.value.isGameOver) return
 
-    private fun movePiece(dx: Int, dy: Int): Boolean {
-        val state = _gameState.value
+    val state = _gameState.value
 
-        val moved = state.currentPiece.copy(
-            position = Cell(
-                x = state.currentPiece.position.x + dx,
-                y = state.currentPiece.position.y + dy
-            )
-        )
+    val rotated = state.currentPiece.copy(
+        rotation = state.currentPiece.rotation + 1
+    )
 
-        return if (isValid(moved, state.board)) {
-            _gameState.value = state.copy(currentPiece = moved)
-            true
-        } else {
-            false
-        }
+    if (BoardLogic.isValid(rotated, state.board)) {
+        _gameState.value = state.copy(currentPiece = rotated)
+    }
+}
+    fun hardDrop() {
+    if (_gameState.value.isGameOver) return
+
+    var state = _gameState.value
+    var moved = BoardLogic.movePiece(state.currentPiece, dx = 0, dy = 1)
+
+    while (BoardLogic.isValid(moved, state.board)) {
+        _gameState.value = state.copy(currentPiece = moved)
+        state = _gameState.value
+        moved = BoardLogic.movePiece(state.currentPiece, dx = 0, dy = 1)
     }
 
-    private fun isValid(
-        piece: Tetromino,
-        board: List<List<TetrominoType?>>
-    ): Boolean {
-        return piece.blocks().all { cell ->
-            cell.x in 0 until 10 &&
-                    cell.y in 0 until 20 &&
-                    board[cell.y][cell.x] == null
-        }
-    }
-
+    lockPiece()
+}
     private fun lockPiece() {
-        val state = _gameState.value
+    val state = _gameState.value
 
-        val newBoard = state.board.map { row ->
-            row.toMutableList()
-        }.toMutableList()
+    val boardWithPiece = BoardLogic.lockPieceOnBoard(
+        board = state.board,
+        piece = state.currentPiece
+    )
 
-        state.currentPiece.blocks().forEach { cell ->
-            if (cell.y in 0 until 20 && cell.x in 0 until 10) {
-                newBoard[cell.y][cell.x] = state.currentPiece.type
-            }
-        }
+    val result = BoardLogic.clearLines(boardWithPiece)
 
-        val result = clearLines(newBoard)
+    val attackLines = AttackLogic.calculateAttack(result.linesCleared)
 
-        val attackLines = calculateAttack(result.linesCleared)
-
-        if (attackLines > 0 && _lobbyState.value.roomId.isNotBlank()) {
-            repository.sendAttack(
-                roomId = _lobbyState.value.roomId,
-                garbageLines = attackLines
-            )
-        }
-
-        val newPiece = state.nextPiece.copy(
-            position = Cell(4, 0)
-        )
-
-        if (!isValid(newPiece, result.board)) {
-            loseGame(result.board)
-            return
-        }
-
-        _gameState.value = state.copy(
-            board = result.board,
-            currentPiece = newPiece,
-            nextPiece = randomPiece(),
-            score = state.score + calculateScore(result.linesCleared),
-            lines = state.lines + result.linesCleared
+    if (attackLines > 0 && _lobbyState.value.roomId.isNotBlank()) {
+        repository.sendAttack(
+            roomId = _lobbyState.value.roomId,
+            garbageLines = attackLines
         )
     }
 
-    private fun clearLines(
-        board: MutableList<MutableList<TetrominoType?>>
-    ): ClearResult {
-        val remainingRows = board.filter { row ->
-            row.any { cell -> cell == null }
-        }
+    val newPiece = state.nextPiece.copy(
+        position = Cell(4, 0)
+    )
 
-        val linesCleared = 20 - remainingRows.size
-
-        val emptyRows = List(linesCleared) {
-            List<TetrominoType?>(10) { null }
-        }
-
-        val newBoard = emptyRows + remainingRows
-
-        return ClearResult(
-            board = newBoard,
-            linesCleared = linesCleared
-        )
+    if (!BoardLogic.isValid(newPiece, result.board)) {
+        loseGame(result.board)
+        return
     }
 
-    private fun calculateAttack(linesCleared: Int): Int {
-        return when (linesCleared) {
-            2 -> 1
-            3 -> 2
-            4 -> 4
-            else -> 0
-        }
-    }
-
-    private fun calculateScore(linesCleared: Int): Int {
-        return when (linesCleared) {
-            1 -> 100
-            2 -> 300
-            3 -> 500
-            4 -> 800
-            else -> 0
-        }
-    }
+    _gameState.value = state.copy(
+        board = result.board,
+        currentPiece = newPiece,
+        nextPiece = randomPiece(),
+        score = state.score + ScoreLogic.calculateScore(result.linesCleared),
+        lines = state.lines + result.linesCleared
+    )
+}
 
     private fun addGarbageLines(amount: Int) {
-        if (_gameState.value.isGameOver) return
+    if (_gameState.value.isGameOver) return
 
-        val state = _gameState.value
-        val currentBoard = state.board.toMutableList()
+    val state = _gameState.value
 
-        repeat(amount) {
-            val hole = (0 until 10).random()
+    val newBoard = BoardLogic.addGarbageLines(
+        board = state.board,
+        amount = amount
+    )
 
-            val garbageRow = List<TetrominoType?>(10) { index ->
-                if (index == hole) null else TetrominoType.Z
-            }
+    if (!BoardLogic.isValid(state.currentPiece, newBoard)) {
+        loseGame(newBoard)
+        return
+    }
 
-            currentBoard.removeAt(0)
-            currentBoard.add(garbageRow)
-        }
-
-        if (!isValid(state.currentPiece, currentBoard)) {
-            loseGame(currentBoard)
-            return
-        }
-
-        _gameState.value = state.copy(
-            board = currentBoard
-        )
+    _gameState.value = state.copy(
+        board = newBoard
+    )
     }
 
     private fun loseGame(board: List<List<TetrominoType?>>) {
