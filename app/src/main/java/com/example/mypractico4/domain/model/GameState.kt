@@ -10,7 +10,8 @@ data class GameState(
     val lines: Int = 0,
     val isGameOver: Boolean = false,
     val startTime: Long = System.currentTimeMillis(),
-    val turbo37Active: Boolean = false
+    val turbo37Active: Boolean = false,//modo37
+    val elapsedSeconds: Long = 0,
 )
 
 fun randomPiece(): Tetromino {

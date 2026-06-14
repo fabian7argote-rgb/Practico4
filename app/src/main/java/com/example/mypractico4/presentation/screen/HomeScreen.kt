@@ -34,7 +34,7 @@ fun HomeScreen(
     ) {
 
         Text(
-            text = "Tetris Duel 37",
+            text = "Tetris Duel ",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )

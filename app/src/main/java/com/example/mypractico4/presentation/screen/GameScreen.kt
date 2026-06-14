@@ -2,6 +2,8 @@ package com.example.mypractico4.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,11 +37,9 @@ fun GameScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Color(0xFFF5F5F5)
-            )
-            .padding(16.dp)
-
+            .verticalScroll(rememberScrollState())
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "TETRIS DUEL",
@@ -104,23 +104,17 @@ fun GameScreen(
                             text = "🏆 Puntaje",
                             fontWeight = FontWeight.Bold
                         )
-                        if (gameState.turbo37Active) {
-                            Text(
-                                text = "Modo Turbo 37 activo",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        } else {
-                            Text(
-                                text = "Turbo 37 disponible a los 37 segundos",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-
                         Text(
                             text = "${gameState.score}",
                             style = MaterialTheme.typography.headlineSmall
                         )
+                        Text("Tiempo: ${gameState.elapsedSeconds}s") //a qui se muestra modo 37
+
+                        if (gameState.turbo37Active) {
+                            Text("🔥 MODO TURBO 37 ACTIVO 🔥")
+                        } else {
+                            Text("Turbo 37 cada 37 segundos")
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -138,44 +132,62 @@ fun GameScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row {
-            Button(onClick = { viewModel.moveLeft() }) {
-                Text("←")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(onClick = { viewModel.rotatePiece() }) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = { viewModel.rotatePiece() },
+                modifier = Modifier.width(70.dp)
+            ) {
                 Text("↻")
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Button(onClick = { viewModel.moveRight() }) {
-                Text("→")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = { viewModel.moveLeft() },
+                    modifier = Modifier.width(70.dp)
+                ) {
+                    Text("←")
+                }
+
+                Button(
+                    onClick = { viewModel.moveDown() },
+                    modifier = Modifier.width(70.dp)
+                ) {
+                    Text("↓")
+                }
+
+                Button(
+                    onClick = { viewModel.moveRight() },
+                    modifier = Modifier.width(70.dp)
+                ) {
+                    Text("→")
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-        Row {
-            Button(onClick = { viewModel.moveDown() }) {
-                Text("↓")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(onClick = { viewModel.hardDrop() }) {
+            Button(
+                onClick = { viewModel.hardDrop() },
+                modifier = Modifier.width(100.dp)
+            ) {
                 Text("Caída")
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = { viewModel.leaveMatch() }
-        ) {
-            Text("Abandonar partida")
+            Button(
+                onClick = { viewModel.leaveMatch() },
+                modifier = Modifier.width(180.dp)
+            ) {
+                Text("Abandonar")
+            }
         }
     }
 }

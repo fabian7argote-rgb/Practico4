@@ -38,7 +38,8 @@ class GameViewModel : ViewModel() {
     val gameState: StateFlow<GameState> = _gameState
 
     private var gameLoopJob: Job? = null
-    private var turbo37Used = false
+    private var turbo37Job: Job? = null//modo 37
+    private var timerJob: Job? = null
 
     init {
         repository.connect()
@@ -108,7 +109,10 @@ class GameViewModel : ViewModel() {
         _gameState.value = GameState()
 
         repository.connect()
-        turbo37Used = false//referencia 37
+        timerJob?.cancel() //modo 37
+        timerJob = null
+        turbo37Job?.cancel()//modo 37
+        turbo37Job = null
     }
 
     fun createRoom() {
@@ -268,28 +272,13 @@ class GameViewModel : ViewModel() {
     fun startGameLoop() {
         if (gameLoopJob != null) return
 
+        startTimer()
+        startTurbo37Loop()
+
         gameLoopJob = viewModelScope.launch {
             while (!_gameState.value.isGameOver) {
-
-                val elapsedSeconds =
-                    (System.currentTimeMillis() - _gameState.value.startTime) / 1000
-
-                if (elapsedSeconds >= 37 && !turbo37Used) {
-                    turbo37Used = true
-
-                    _gameState.value = _gameState.value.copy(
-                        turbo37Active = true
-                    )
-
-                    delay(5000)
-
-                    _gameState.value = _gameState.value.copy(
-                        turbo37Active = false
-                    )
-                }
-
                 val delayTime = if (_gameState.value.turbo37Active) {
-                    441L // 700 - 37%
+                    441L
                 } else {
                     700L
                 }
@@ -299,11 +288,48 @@ class GameViewModel : ViewModel() {
             }
         }
     }
+    private fun startTimer() {
+        if (timerJob != null) return
+
+        timerJob = viewModelScope.launch {
+            while (!_gameState.value.isGameOver) {
+                delay(1000)
+
+                _gameState.value = _gameState.value.copy(
+                    elapsedSeconds = _gameState.value.elapsedSeconds + 1
+                )
+            }
+        }
+    }
+    private fun startTurbo37Loop() {
+        if (turbo37Job != null) return
+
+        turbo37Job = viewModelScope.launch {
+            while (!_gameState.value.isGameOver) {
+                delay(37_000)
+
+                if (_gameState.value.isGameOver) return@launch
+
+                _gameState.value = _gameState.value.copy(
+                    turbo37Active = true
+                )
+
+                delay(5_000)
+
+                _gameState.value = _gameState.value.copy(
+                    turbo37Active = false
+                )
+            }
+        }
+    }
+    //aqui acaba el modo 37
 
 
     override fun onCleared() {
         super.onCleared()
         gameLoopJob?.cancel()
+        timerJob?.cancel()//modo 37
+        turbo37Job?.cancel()//modo 37
         repository.disconnect()
     }
     fun getDurationSeconds(): Long {
