@@ -38,6 +38,7 @@ class GameViewModel : ViewModel() {
     val gameState: StateFlow<GameState> = _gameState
 
     private var gameLoopJob: Job? = null
+    private var turbo37Used = false
 
     init {
         repository.connect()
@@ -107,6 +108,7 @@ class GameViewModel : ViewModel() {
         _gameState.value = GameState()
 
         repository.connect()
+        turbo37Used = false//referencia 37
     }
 
     fun createRoom() {
@@ -268,11 +270,36 @@ class GameViewModel : ViewModel() {
 
         gameLoopJob = viewModelScope.launch {
             while (!_gameState.value.isGameOver) {
-                delay(700)
+
+                val elapsedSeconds =
+                    (System.currentTimeMillis() - _gameState.value.startTime) / 1000
+
+                if (elapsedSeconds >= 37 && !turbo37Used) {
+                    turbo37Used = true
+
+                    _gameState.value = _gameState.value.copy(
+                        turbo37Active = true
+                    )
+
+                    delay(5000)
+
+                    _gameState.value = _gameState.value.copy(
+                        turbo37Active = false
+                    )
+                }
+
+                val delayTime = if (_gameState.value.turbo37Active) {
+                    441L // 700 - 37%
+                } else {
+                    700L
+                }
+
+                delay(delayTime)
                 moveDown()
             }
         }
     }
+
 
     override fun onCleared() {
         super.onCleared()

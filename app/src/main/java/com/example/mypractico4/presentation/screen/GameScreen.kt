@@ -104,6 +104,18 @@ fun GameScreen(
                             text = "🏆 Puntaje",
                             fontWeight = FontWeight.Bold
                         )
+                        if (gameState.turbo37Active) {
+                            Text(
+                                text = "Modo Turbo 37 activo",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Text(
+                                text = "Turbo 37 disponible a los 37 segundos",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
 
                         Text(
                             text = "${gameState.score}",
