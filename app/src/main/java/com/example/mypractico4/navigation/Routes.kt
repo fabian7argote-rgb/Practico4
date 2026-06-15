@@ -6,8 +6,4 @@ object Routes {
     const val GAME = "game"
     const val RESULT = "result"
 
-    fun lobby(roomId: String): String {
-        return LOBBY
-    }
-
 }

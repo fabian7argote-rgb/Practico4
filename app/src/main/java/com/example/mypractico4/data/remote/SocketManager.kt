@@ -11,7 +11,7 @@ class SocketManager {
 
     fun connect() {
         if (socket == null) {
-            socket = IO.socket("http://192.168.0.101:3000")
+            socket = IO.socket("http://192.168.50.195:3000")
         }
 
         socket?.connect()

@@ -278,7 +278,7 @@ class GameViewModel : ViewModel() {
         gameLoopJob = viewModelScope.launch {
             while (!_gameState.value.isGameOver) {
                 val delayTime = if (_gameState.value.turbo37Active) {
-                    441L
+                    250L
                 } else {
                     700L
                 }

@@ -81,7 +81,8 @@ object BoardLogic {
             val hole = (0 until 10).random()
 
             val garbageRow = List<TetrominoType?>(10) { index ->
-                if (index == hole) null else TetrominoType.Z
+                if (index == hole) null
+                else TetrominoType.Z
             }
 
             currentBoard.removeAt(0)
